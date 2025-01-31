@@ -2,8 +2,8 @@ name: NodeJS Libs
 on:
   push:
     paths:
-      - "nodejs-libs/**"
-      - "!nodejs-libs/**/README.md"
+      - "services/hyper-sdk-server/**"
+      - "!services/hyper-sdk-server/**/README.md"
   workflow_dispatch:
     inputs: { }
 
