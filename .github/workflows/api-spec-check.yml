@@ -1,0 +1,68 @@
+name: NodeJS Libs
+on:
+  push:
+    paths:
+      - "nodejs-libs/**"
+      - "!nodejs-libs/**/README.md"
+  workflow_dispatch:
+    inputs: { }
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+defaults:
+  run:
+    shell: bash
+    working-directory: "services/hyper-sdk-server"
+
+jobs:
+  buildAndPublish:
+    name: Build and Publish Node Libs
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "21"
+          cache: "npm"
+          cache-dependency-path: nodejs-libs/**/package-lock.json
+
+      - name: Set Registry Config
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> $HOME/.npmrc
+          npm config set @teamlyf:registry https://npm.pkg.github.com/teamlyf
+
+      - name: Install JSON
+        run: npm install -g json@latest
+
+      - name: Install NPM for Root
+        run: |
+          npm install
+
+      - name: Run Lint
+        # For now, remove node_modules to avoid enumeration
+        run: |
+          npm run lint && rm -rf "node_modules/"
+
+      - name: Update Version for Snapshot
+        if: github.ref == 'refs/heads/dev' || endsWith(github.ref, '-build')
+        run: |
+          qualifier="-beta-$(date +%y%m%d%H%M)"
+          for lib_dir in `ls -d */`
+          do 
+              cd $lib_dir && json -I -f package.json -e "this.version=this.version+\"${qualifier}\""  && cd - 
+          done
+
+      - name: Build Packages
+        run: |
+          npm install --workspaces && npm run build --workspaces --if-present
+
+      - name: Test Packages
+        run: |
+          npm run test --workspaces --if-present
+
+      - name: Publish Packages
+        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || endsWith(github.ref, '-build')
+        run: |
+          npm publish --workspaces

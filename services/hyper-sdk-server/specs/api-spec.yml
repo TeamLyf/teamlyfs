@@ -1,0 +1,909 @@
+openapi: 3.0.0
+info:
+  title: "MVM Game SDK"
+  description: "This service provides endpoints for all MVM sdk related interactions"
+  version: 1.0.0
+  contact:
+    name: "Nestcoin Team"
+    email: "dev@nestcoin.com"
+
+x-organization: hyper
+x-service-id: hyper-sdk
+x-gateway-group: hypersdk
+
+servers:
+- description: Staging Ingress
+  url: https://api.dev.hypergames.app
+
+security:
+  - bearerToken: []
+
+tags:
+  - name: auth
+    description: "Authentication related endpoints"
+  - name: accounts
+    description: "Account related endpoints"
+  - name: workspaces
+    description: "Workspace related endpoints"
+
+paths:
+  /auth/{provider}/init:
+    parameters:
+      - $ref: "#/components/parameters/providerParam"
+    post:
+      summary: "Oauth Init"
+      description: "Returns a redirect url to initialize authentication"
+      operationId: initOauth
+      x-visibility: public
+      security: []
+      tags:
+        - "auth"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthInitRequestDto"
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthInitResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "422":
+          $ref: "#/components/responses/UnprocessableError"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /auth/{provider}/callback:
+    parameters:
+      - $ref: "#/components/parameters/providerParam"
+    get:
+      summary: "Oauth Callback"
+      description: |
+        Once the code is verified and an accessToken/idToken is gotten, user will be redirected to the redirectUrl provided at the init stage (`/auth/{provider}/init`).
+        The redirection will have a data query, which is the base64 encoded value of the auth object with the properties `idToken` and `provider`.
+      operationId: oauthInitCallback
+      x-visibility: public
+      security: []
+      tags:
+        - "auth"
+      parameters:
+        - in: "query"
+          name: "code"
+          schema:
+            type: "string"
+          required: false
+          description: "The auth code from the provider"
+          allowReserved: true
+        - in: "query"
+          name: "error"
+          schema:
+            type: "string"
+          required: false
+          description: "The auth error from the provider. This is mostly due to users declining provider permissions"
+        - in: "query"
+          name: "state"
+          schema:
+            type: "string"
+          description: "The state that was initially sent to the provider"
+        - in: "query"
+          name: "params"
+          required: false
+          schema:
+            type: "object"
+            additionalProperties: true
+          description: "To allow for dynamic queries that are specific to provider"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        "301":
+          $ref: "#/components/responses/StatusResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "422":
+          $ref: "#/components/responses/UnprocessableError"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /auth/verify:
+    post:
+      summary: "Oauth Verify"
+      description: "Single Sign-On"
+      operationId: verifyOauth
+      x-visibility: public
+      security: []
+      tags:
+        - "auth"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthRequestDto"
+      responses:
+        "200":
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/UnprocessableError"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /auth/refresh-tokens:
+    post:
+      summary: "Refresh tokens"
+      description: |
+        Refresh auth tokens using the refresh token supplied as bearerToken header, 
+        and it responds with a new access token and refresh token.
+      operationId: refreshTokens
+      x-visibility: public
+      tags:
+        - "auth"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /auth/logout:
+    post:
+      summary: "Log user out"
+      description: "This destroys both access token and refresh token"
+      operationId: logout
+      x-visibility: public
+      tags:
+        - "auth"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /me:
+    get:
+      summary: "Get user profile"
+      operationId: getMyProfile
+      description: "Get the profile of active user"
+      x-visibility: "public"
+      tags:
+        - "accounts"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "default":
+          $ref: "#/components/responses/ServerError"
+    patch:
+      summary: "Update user"
+      operationId: updateUser
+      description: "Update the profile of active user"
+      x-visibility: "public"
+      tags:
+        - "accounts"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserDto"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "default":
+          $ref: "#/components/responses/ServerError"
+    delete:
+      summary: "Delete user"
+      operationId: deleteMyAccount
+      description: "Delete the gamer profile of active user"
+      x-visibility: "public"
+      tags:
+        - "accounts"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/UnprocessableError"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /workspaces:
+    post:
+      summary: "Create a new workspace"
+      operationId: "createWorkspace"
+      description: "Add new workspace"
+      x-visibility: "public"
+      tags:
+        - "workspaces"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateWorkspaceDto"
+      responses:
+        "201":
+          description: "CREATED"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+    get:
+      summary: "Get all workspaces"
+      operationId: "getAllWorkspaces"
+      description: "Get all workspaces"
+      x-visibility: "public"
+      tags:
+        - "workspaces"
+      parameters:
+        - $ref: "#/components/parameters/pageQuery"
+        - $ref: "#/components/parameters/limitQuery"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkspaceList"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /me/workspaces:
+    get:
+      summary: "Get user workspaces"
+      operationId: "getUserWorkspaces"
+      description: "Get workspaces where user is a part of"
+      x-visibility: "public"
+      tags:
+        - "workspaces"
+      parameters:
+        - $ref: "#/components/parameters/pageQuery"
+        - $ref: "#/components/parameters/limitQuery"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkspaceList"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /workspaces/{workspaceId}:
+    parameters:
+      - $ref: "#/components/parameters/workspaceIdParam"
+    get:
+      summary: "Get workspace by ID"
+      operationId: "getWorkspaceById"
+      description: "Get workspace by ID"
+      x-visibility: "public"
+      tags:
+        - "workspaces"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+    patch:
+      summary: "Update workspace"
+      operationId: "updateWorkspace"
+      description: "Update workspace details"
+      x-visibility: "public"
+      tags:
+        - "workspaces"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UpdateWorkspaceDto"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+    delete:
+      summary: "Delete workspace"
+      operationId: "deleteWorkspace"
+      description: "Delete workspace by ID"
+      x-visibility: "public"
+      tags:
+        - "workspaces"
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+  /workspaces/{workspaceId}/members:
+    parameters:
+      - $ref: "#/components/parameters/workspaceIdParam"
+    get:
+      summary: "Get workspace members"
+      operationId: "getWorkspaceMembers"
+      description: "Get workspace members"
+      x-visibility: "public"
+      tags:
+        - "workspaces"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemberList"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "default":
+          $ref: "#/components/responses/ServerError"
+
+components:
+  schemas:
+    # REQUEST OBJECT DEFINITIONS
+    OAuthInitRequestDto:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "redirectUrl"
+      properties:
+        redirectUrl:
+          type: "string"
+          format: "url"
+          minLength: 10
+          description: "The url to redirect to after authentication is completed"
+
+    OAuthRequestProviderData:
+      type: "object"
+      description: "Optional provider data, this is currently being used when provider is APPLE"
+      properties:
+        firstName:
+          type: "string"
+          description: "First name of the user"
+        lastName:
+          type: "string"
+          description: "Last name of the user"
+
+    OAuthRequestDto:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "idToken"
+        - "provider"
+      properties:
+        idToken:
+          type: "string"
+          minLength: 10
+          description: "Token from SSO initiated on the frontend (Mobile app)"
+        provider:
+          $ref: "#/components/schemas/OAuthProvider"
+        providerData:
+          $ref: "#/components/schemas/OAuthRequestProviderData"
+        countryCode:
+          type: "string"
+          minLength: 2
+          maxLength: 3
+          example: "NG"
+
+    UpdateUserDto:
+      type: "object"
+      additionalProperties: false
+      properties:
+        firstName:
+          type: "string"
+          description: "The first name of user"
+        lastName:
+          type: "string"
+          description: "The last name of user"
+        countryCode:
+          type: "string"
+          minLength: 2
+          maxLength: 2
+          example: "NG"
+
+    UpdateUserStatusRequestDto:
+      type: "object"
+      description: "Request data for updating user status"
+      required:
+        - "active"
+      properties:
+        active:
+          type: "boolean"
+          description: "Checks if a user has been disabled from the system"
+        reason:
+          type: "string"
+          description: "The reason why the user status is being updated"
+
+    CreateWorkspaceDto:
+      type: "object"
+      description: "Create workspace request data"
+      required:
+        - "name"
+      properties:
+        name:
+          type: "string"
+          description: "The name of the workspace"
+          minLength: 3
+
+    UpdateWorkspaceDto:
+      type: "object"
+      description: "Update workspace request data"
+      properties:
+        name:
+          type: "string"
+          description: "The name of the workspace"
+          minLength: 3
+        logo:
+          type: "string"
+          format: "binary"
+          description: "The workspace logo image"
+        inviteCode:
+          type: "string"
+          description: "The workspace invitation code"
+
+    # RESPONSE OBJECT DEFINITIONS
+    User:
+      type: "object"
+      required:
+        - "id"
+        - "username"
+        - "email"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id of the user"
+        username:
+          type: "string"
+          pattern: '^\w{2,15}$'
+          description: "The username of user"
+        firstName:
+          type: "string"
+          description: "The first name of user"
+        lastName:
+          type: "string"
+          description: "The last name of user"
+        email:
+          type: "string"
+          format: "email"
+          description: "The email of user"
+        active:
+          type: "boolean"
+          description: "A value of false indicate that user has been disabled from the system"
+        countryCode:
+          type: "string"
+          minLength: 2
+          maxLength: 2
+          example: "NG"
+
+    UserSummary:
+      type: "object"
+      required:
+        - "id"
+        - "email"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The id of the user"
+        email:
+          type: "string"
+          format: "email"
+          description: "The email of user"
+
+    AuthTokens:
+      type: "object"
+      additionalProperties: false
+      required:
+        - "access"
+        - "refresh"
+      properties:
+        access:
+          type: "string"
+          minLength: 10
+          description: "Authorizes a valid user (JWT)"
+        refresh:
+          type: "string"
+          minLength: 10
+          description: "Used to renew access token when expired (JWT). It is only valid for one time use"
+
+    OAuthInitResponse:
+      type: "object"
+      properties:
+        initializationUrl:
+          type: "string"
+          format: "url"
+          minLength: 10
+          description: "The url to redirect to in order to initialize authentication"
+
+    OAuthResponse:
+      type: "object"
+      required:
+        - "user"
+        - "tokens"
+        - "isReturning"
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tokens:
+          $ref: "#/components/schemas/AuthTokens"
+        isReturning:
+          type: "boolean"
+          description: "Whether or not the user is a returning user. Value is true for login and false for signup"
+
+    Workspace:
+      type: "object"
+      description: "Workspace response data"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "The unique identifier of the workspace"
+        name:
+          type: "string"
+          description: "The name of the workspace"
+        logo:
+          type: "string"
+          description: "The URL of the workspace logo"
+        inviteCode:
+          type: "string"
+          description: "Unique invite code for the workspace"
+        creator:
+          $ref: "#/components/schemas/UserSummary"
+
+    WorkspaceList:
+      type: "object"
+      description: "List of workspaces"
+      allOf:
+        - $ref: "#/components/schemas/PagedItems"
+        - type: "object"
+          required:
+            - "records"
+          properties:
+            records:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Workspace"
+
+    Member:
+      type: "object"
+      description: "Workspace member response data"
+      required:
+        - "firstName"
+        - "lastName"
+        - "email"
+        - "role"
+        - "isActive"
+      properties:
+        id:
+          type: "string"
+          format: "uuid"
+          description: "Unique identifier of the member"
+        firstName:
+          type: "string"
+          description: "First name of the member"
+        lastName:
+          type: "string"
+          description: "Last name of the member"
+        email:
+          type: "string"
+          format: "email"
+          description: "Email address of the member"
+        role:
+          $ref: "#/components/schemas/MemberRole"
+        isActive:
+          type: "boolean"
+          description: "Whether the member is active"
+        joinDate:
+          type: "string"
+          format: "date-time"
+          description: "Date when the member joined the workspace"
+        leaveDate:
+          type: "string"
+          format: "date-time"
+          description: "Date when the member left the workspace"
+
+    MemberList:
+      type: "object"
+      description: "List of workspace members"
+      allOf:
+        - $ref: "#/components/schemas/PagedItems"
+        - type: "object"
+          required:
+            - "records"
+          properties:
+            records:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Member"
+
+    MemberRole:
+      type: "string"
+      enum: [ "OWNER", "ADMIN", "MEMBER" ]
+      description: "Role of the member in the workspace"
+
+    PagedItems:
+      allOf:
+      - $ref: "https://resources.nestechops.com/openapi/common.yaml#/components/schemas/Paging"
+      - type: "object"
+        properties:
+          pageCount:
+            minimum: 0
+            type: "integer"
+            format: "int32"
+            description: "Positive integer"
+          page:
+            minimum: 1
+            type: "integer"
+            format: "int32"
+            description: "Positive integer"
+          limit:
+            minimum: 1
+            type: "integer"
+            format: "int32"
+            description: "Positive integer"
+
+    PositiveInteger:
+      $ref: "https://resources.nestechops.com/openapi/common.yaml#/components/schemas/PositiveInteger"
+
+    ErrorMessageDto:
+      $ref: "https://resources.nestechops.com/openapi/common.yaml#/components/schemas/ErrorMessageDto"
+
+    StatusDto:
+      $ref: "https://resources.nestechops.com/openapi/common.yaml#/components/schemas/StatusDto"
+
+    Timestamp:
+      $ref: "https://resources.nestechops.com/openapi/common.yaml#/components/schemas/Timestamp"
+
+    # ENUM DEFINITIONS
+
+    OAuthProvider:
+      type: "string"
+      description: "The provider that sponsors the user authentication"
+      enum: &OAuthProvider
+        - GOOGLE
+        - FACEBOOK
+        - APPLE
+        - TWITTER
+
+  parameters:
+    userIdParam:
+      in: "path"
+      name: "userId"
+      schema:
+        type: "string"
+        format: "uuid"
+      required: true
+      description: "User identifier in path"
+    identifierParam:
+      in: "path"
+      name: "identifier"
+      schema:
+        type: "string"
+      required: true
+      description: "User Id or username or email in path"
+    providerParam:
+      in: "path"
+      name: "provider"
+      schema:
+        type: "string"
+      required: true
+      description: "Provider property in path (case insensitive value of the provider)"
+    workspaceIdParam:
+      in: "path"
+      name: "workspaceId"
+      schema:
+        type: "string"
+        format: "uuid"
+      required: true
+      description: "The unique identifier of the workspace"
+    memberIdParam:
+      in: "path"
+      name: "memberId"
+      schema:
+        type: "string"
+        format: "uuid"
+      required: true
+      description: "The unique identifier of the member"
+    pageQuery:
+      in: "query"
+      name: page
+      schema:
+        type: "integer"
+        format: "int32"
+        minimum: 1
+        description: "Positive integer"
+      required: false
+      description: Page to be gotten based on size parameters
+    limitQuery:
+      in: "query"
+      name: limit
+      schema:
+        type: "integer"
+        format: "int32"
+        minimum: 1
+        description: "Positive integer"
+      required: false
+      description: Number of items to be gotten per page
+
+  responses:
+    StatusResponse:
+      description: Request status
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/StatusDto"
+          example:
+            success: true
+            message: "Action completed successfully"
+            data:
+              label: name of service
+              expiry: date
+
+    InvalidRequest:
+      description: Request could not be validated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessageDto"
+          example:
+            code: "BAD_REQUEST"
+            message: "Request could not be validated."
+
+    Unauthorized:
+      description: Client is not authorized to make request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessageDto"
+          example:
+            code: "UNAUTHORIZED"
+            message: "Either client security header is missing or it is not valid."
+
+    NotFound:
+      description: Entity was not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessageDto"
+          example:
+            code: "NOT_FOUND"
+            message: "Information could not be found"
+
+    ConflictError:
+      description: Entity already exist while user tries to create it.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessageDto"
+          example:
+            code: "ACCESS_DENIED"
+            message: "Entity already exist!"
+
+    AccessDenied:
+      description: Expected permission is not available.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessageDto"
+          example:
+            code: "ACCESS_DENIED"
+            message: "Expected permission or scope is not present."
+
+    UnprocessableError:
+      description: Entity could not be processed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessageDto"
+          example:
+            code: "UNPROCESSABLE"
+            message: "Sorry we could not process your request"
+
+    ServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorMessageDto"
+          example:
+            code: "INTERNAL_ERROR"
+            message: "An internal server error occurred."
+
+  securitySchemes:
+    bearerToken:
+      type: "http"
+      scheme: "bearer"
+      bearerFormat: "JWT"
+      description: "Authentication for user-facing endpoints. Uses bearer token in API prefix."
+    authToken:
+      type: "apiKey"
+      name: "x-auth-token"
+      in: "header"
+      description: "Auth Token header for inter-service communication"
