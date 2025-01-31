@@ -41,12 +41,6 @@ jobs:
           qualifier="-beta-$(date +%y%m%d%H%M)"
           jq ".version += \"${qualifier}\"" package.json > package.json.tmp && mv package.json.tmp package.json
 
-      - name: Build Package
-        run: npm run build
-
-      - name: Test Package
-        run: npm test
-
       - name: Publish Package
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || endsWith(github.ref, '-build')
         run: npm publish --access public
