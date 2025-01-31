@@ -16,20 +16,20 @@ servers:
   url: https://api.dev.hypergames.app
 
 security:
-- bearerToken: []
+  - bearerToken: []
 
 tags:
-- name: auth
-  description: "Authentication related endpoints"
-- name: accounts
-  description: "Account related endpoints"
-- name: workspaces
-  description: "Workspace related"
+  - name: auth
+    description: "Authentication related endpoints"
+  - name: accounts
+    description: "Account related endpoints"
+  - name: workspaces
+    description: "Workspace related endpoints"
 
 paths:
   /auth/{provider}/init:
     parameters:
-    - $ref: "#/components/parameters/providerParam"
+      - $ref: "#/components/parameters/providerParam"
     post:
       summary: "Oauth Init"
       description: "Returns a redirect url to initialize authentication"
@@ -37,7 +37,7 @@ paths:
       x-visibility: public
       security: []
       tags:
-      - "auth"
+        - "auth"
       requestBody:
         content:
           application/json:
@@ -59,7 +59,7 @@ paths:
 
   /auth/{provider}/callback:
     parameters:
-    - $ref: "#/components/parameters/providerParam"
+      - $ref: "#/components/parameters/providerParam"
     get:
       summary: "Oauth Callback"
       description: |
@@ -69,33 +69,33 @@ paths:
       x-visibility: public
       security: []
       tags:
-      - "auth"
+        - "auth"
       parameters:
-      - in: "query"
-        name: "code"
-        schema:
-          type: "string"
-        required: false
-        description: "The auth code from the provider"
-        allowReserved: true
-      - in: "query"
-        name: "error"
-        schema:
-          type: "string"
-        required: false
-        description: "The auth error from the provider. This is mostly due to users declining provider permissions"
-      - in: "query"
-        name: "state"
-        schema:
-          type: "string"
-        description: "The state that was initially sent to the provider"
-      - in: "query"
-        name: "params"
-        required: false
-        schema:
-          type: "object"
-          additionalProperties: true
-        description: "To allow for dynamic queries that are specific to provider"
+        - in: "query"
+          name: "code"
+          schema:
+            type: "string"
+          required: false
+          description: "The auth code from the provider"
+          allowReserved: true
+        - in: "query"
+          name: "error"
+          schema:
+            type: "string"
+          required: false
+          description: "The auth error from the provider. This is mostly due to users declining provider permissions"
+        - in: "query"
+          name: "state"
+          schema:
+            type: "string"
+          description: "The state that was initially sent to the provider"
+        - in: "query"
+          name: "params"
+          required: false
+          schema:
+            type: "object"
+            additionalProperties: true
+          description: "To allow for dynamic queries that are specific to provider"
       responses:
         "200":
           $ref: "#/components/responses/StatusResponse"
@@ -116,7 +116,7 @@ paths:
       x-visibility: public
       security: []
       tags:
-      - "auth"
+        - "auth"
       requestBody:
         content:
           application/json:
@@ -147,7 +147,7 @@ paths:
       operationId: refreshTokens
       x-visibility: public
       tags:
-      - "auth"
+        - "auth"
       responses:
         "200":
           description: "OK"
@@ -169,7 +169,7 @@ paths:
       operationId: logout
       x-visibility: public
       tags:
-      - "auth"
+        - "auth"
       responses:
         "200":
           $ref: "#/components/responses/StatusResponse"
@@ -185,7 +185,7 @@ paths:
       description: "Get the profile of active user"
       x-visibility: "public"
       tags:
-      - "accounts"
+        - "accounts"
       responses:
         "200":
           description: "OK"
@@ -205,7 +205,7 @@ paths:
       description: "Update the profile of active user"
       x-visibility: "public"
       tags:
-      - "accounts"
+        - "accounts"
       requestBody:
         content:
           application/json:
@@ -232,7 +232,7 @@ paths:
       description: "Delete the gamer profile of active user"
       x-visibility: "public"
       tags:
-      - "accounts"
+        - "accounts"
       responses:
         "200":
           $ref: "#/components/responses/StatusResponse"
@@ -252,7 +252,7 @@ paths:
       description: "Add new workspace"
       x-visibility: "public"
       tags:
-      - "workspaces"
+        - "workspaces"
       requestBody:
         content:
           application/json:
@@ -280,10 +280,10 @@ paths:
       description: "Get all workspaces"
       x-visibility: "public"
       tags:
-      - "workspaces"
+        - "workspaces"
       parameters:
-      - $ref: "#/components/parameters/pageQuery"
-      - $ref: "#/components/parameters/limitQuery"
+        - $ref: "#/components/parameters/pageQuery"
+        - $ref: "#/components/parameters/limitQuery"
       responses:
         "200":
           description: "OK"
@@ -305,10 +305,10 @@ paths:
       description: "Get workspaces where user is a part of"
       x-visibility: "public"
       tags:
-      - "workspaces"
+        - "workspaces"
       parameters:
-      - $ref: "#/components/parameters/pageQuery"
-      - $ref: "#/components/parameters/limitQuery"
+        - $ref: "#/components/parameters/pageQuery"
+        - $ref: "#/components/parameters/limitQuery"
       responses:
         "200":
           description: "OK"
@@ -327,14 +327,14 @@ paths:
 
   /workspaces/{workspaceId}:
     parameters:
-    - $ref: "#/components/parameters/workspaceIdParam"
+      - $ref: "#/components/parameters/workspaceIdParam"
     get:
       summary: "Get workspace by ID"
       operationId: "getWorkspaceById"
       description: "Get workspace by ID"
       x-visibility: "public"
       tags:
-      - "workspaces"
+        - "workspaces"
       responses:
         "200":
           description: "OK"
@@ -357,7 +357,7 @@ paths:
       description: "Update workspace details"
       x-visibility: "public"
       tags:
-      - "workspaces"
+        - "workspaces"
       requestBody:
         content:
           multipart/form-data:
@@ -385,7 +385,7 @@ paths:
       description: "Delete workspace by ID"
       x-visibility: "public"
       tags:
-      - "workspaces"
+        - "workspaces"
       responses:
         "200":
           $ref: "#/components/responses/StatusResponse"
@@ -400,14 +400,14 @@ paths:
 
   /workspaces/{workspaceId}/members:
     parameters:
-    - $ref: "#/components/parameters/workspaceIdParam"
+      - $ref: "#/components/parameters/workspaceIdParam"
     get:
       summary: "Get workspace members"
       operationId: "getWorkspaceMembers"
       description: "Get workspace members"
       x-visibility: "public"
       tags:
-      - "workspaces"
+        - "workspaces"
       responses:
         "200":
           description: "OK"
@@ -431,7 +431,7 @@ components:
       type: "object"
       additionalProperties: false
       required:
-      - "redirectUrl"
+        - "redirectUrl"
       properties:
         redirectUrl:
           type: "string"
@@ -454,8 +454,8 @@ components:
       type: "object"
       additionalProperties: false
       required:
-      - "idToken"
-      - "provider"
+        - "idToken"
+        - "provider"
       properties:
         idToken:
           type: "string"
@@ -491,7 +491,7 @@ components:
       type: "object"
       description: "Request data for updating user status"
       required:
-      - "active"
+        - "active"
       properties:
         active:
           type: "boolean"
@@ -504,7 +504,7 @@ components:
       type: "object"
       description: "Create workspace request data"
       required:
-      - "name"
+        - "name"
       properties:
         name:
           type: "string"
@@ -531,9 +531,9 @@ components:
     User:
       type: "object"
       required:
-      - "id"
-      - "username"
-      - "email"
+        - "id"
+        - "username"
+        - "email"
       properties:
         id:
           type: "string"
@@ -565,8 +565,8 @@ components:
     UserSummary:
       type: "object"
       required:
-      - "id"
-      - "email"
+        - "id"
+        - "email"
       properties:
         id:
           type: "string"
@@ -581,8 +581,8 @@ components:
       type: "object"
       additionalProperties: false
       required:
-      - "access"
-      - "refresh"
+        - "access"
+        - "refresh"
       properties:
         access:
           type: "string"
@@ -605,9 +605,9 @@ components:
     OAuthResponse:
       type: "object"
       required:
-      - "user"
-      - "tokens"
-      - "isReturning"
+        - "user"
+        - "tokens"
+        - "isReturning"
       properties:
         user:
           $ref: "#/components/schemas/User"
@@ -641,25 +641,25 @@ components:
       type: "object"
       description: "List of workspaces"
       allOf:
-      - $ref: "#/components/schemas/PagedItems"
-      - type: "object"
-        required:
-        - "records"
-        properties:
-          records:
-            type: "array"
-            items:
-              $ref: "#/components/schemas/Workspace"
+        - $ref: "#/components/schemas/PagedItems"
+        - type: "object"
+          required:
+            - "records"
+          properties:
+            records:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Workspace"
 
     Member:
       type: "object"
       description: "Workspace member response data"
       required:
-      - "firstName"
-      - "lastName"
-      - "email"
-      - "role"
-      - "isActive"
+        - "firstName"
+        - "lastName"
+        - "email"
+        - "role"
+        - "isActive"
       properties:
         id:
           type: "string"
@@ -693,15 +693,15 @@ components:
       type: "object"
       description: "List of workspace members"
       allOf:
-      - $ref: "#/components/schemas/PagedItems"
-      - type: "object"
-        required:
-        - "records"
-        properties:
-          records:
-            type: "array"
-            items:
-              $ref: "#/components/schemas/Member"
+        - $ref: "#/components/schemas/PagedItems"
+        - type: "object"
+          required:
+            - "records"
+          properties:
+            records:
+              type: "array"
+              items:
+                $ref: "#/components/schemas/Member"
 
     MemberRole:
       type: "string"
