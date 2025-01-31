@@ -22,10 +22,8 @@ jobs:
           registry-url: "https://npm.pkg.github.com"
           cache: "npm"
 
-      - name: Set Registry Config
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> ~/.npmrc
-          npm config set @teamlyf:registry https://npm.pkg.github.com/Teamlyf
+      - name: Set Auth Token
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.TEAMLYF_GITHUB_TOKEN }}" >> ~/.npmrc
 
       - name: Install Dependencies
         run: npm install
