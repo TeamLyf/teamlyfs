@@ -3,16 +3,11 @@ name: NodeJS Libs
 on:
   push:
     paths:
-      - "*"
+      - "**"
   workflow_dispatch:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-defaults:
-  run:
-    shell: bash
-    working-directory: "*"
 
 jobs:
   buildAndPublish:
@@ -35,11 +30,11 @@ jobs:
         run: npm install
 
       - name: Update Version for Snapshot
-        if: github.ref == 'refs/heads/dev' || endsWith(github.ref, '-build')
+        if: github.ref == 'refs/heads/main' || endsWith(github.ref, '-build')
         run: |
           qualifier="-beta-$(date +%y%m%d%H%M)"
           jq ".version += \"${qualifier}\"" package.json > package.json.tmp && mv package.json.tmp package.json
 
       - name: Publish Package
-        if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || endsWith(github.ref, '-build')
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/main' || endsWith(github.ref, '-build')
         run: npm publish --access public
