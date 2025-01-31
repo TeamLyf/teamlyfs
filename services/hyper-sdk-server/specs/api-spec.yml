@@ -24,7 +24,7 @@ tags:
   - name: accounts
     description: "Account related endpoints"
   - name: workspaces
-    description: "Workspace related"
+    description: "Workspace related endpoints"
 
 paths:
   /auth/{provider}/init:
