@@ -1,11 +1,11 @@
 name: NodeJS Libs
+
 on:
   push:
     paths:
       - "services/hyper-sdk-server/**"
       - "!services/hyper-sdk-server/**/README.md"
   workflow_dispatch:
-    inputs: { }
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -17,52 +17,39 @@ defaults:
 
 jobs:
   buildAndPublish:
-    name: Build and Publish Node Libs
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
-          node-version: "21"
+          node-version: "18.x"
           cache: "npm"
-          cache-dependency-path: nodejs-libs/**/package-lock.json
 
       - name: Set Registry Config
         run: |
-          echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> $HOME/.npmrc
-          npm config set @teamlyf:registry https://npm.pkg.github.com/teamlyf
+          echo "//npm.pkg.github.com/:_authToken=$GITHUB_TOKEN" >> ~/.npmrc
+          npm config set @teamlyf:registry https://npm.pkg.github.com
 
-      - name: Install JSON
-        run: npm install -g json@latest
+      - name: Install Dependencies
+        run: npm install
 
-      - name: Install NPM for Root
-        run: |
-          npm install
-
-      - name: Run Lint
-        # For now, remove node_modules to avoid enumeration
-        run: |
-          npm run lint && rm -rf "node_modules/"
+      - name: Lint
+        run: npm run lint
 
       - name: Update Version for Snapshot
         if: github.ref == 'refs/heads/dev' || endsWith(github.ref, '-build')
         run: |
           qualifier="-beta-$(date +%y%m%d%H%M)"
-          for lib_dir in `ls -d */`
-          do 
-              cd $lib_dir && json -I -f package.json -e "this.version=this.version+\"${qualifier}\""  && cd - 
-          done
+          jq ".version += \"${qualifier}\"" package.json > package.json.tmp && mv package.json.tmp package.json
 
-      - name: Build Packages
-        run: |
-          npm install --workspaces && npm run build --workspaces --if-present
+      - name: Build Package
+        run: npm run build
 
-      - name: Test Packages
-        run: |
-          npm run test --workspaces --if-present
+      - name: Test Package
+        run: npm test
 
-      - name: Publish Packages
+      - name: Publish Package
         if: github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main' || endsWith(github.ref, '-build')
-        run: |
-          npm publish --workspaces
+        run: npm publish --access public
