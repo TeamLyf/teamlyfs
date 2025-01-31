@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  GITHUB_TOKEN: ${{ secrets.TEAMLYF_GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.PACKAGE_GITHUB_TOKEN }}
 
 jobs:
   buildAndPublish:
@@ -23,7 +23,7 @@ jobs:
           cache: "npm"
 
       - name: Set Auth Token
-        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.TEAMLYF_GITHUB_TOKEN }}" >> ~/.npmrc
+        run: echo "//npm.pkg.github.com/:_authToken=${{ secrets.PACKAGE_GITHUB_TOKEN }}" >> ~/.npmrc
 
       - name: Install Dependencies
         run: npm install
