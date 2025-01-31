@@ -3,8 +3,7 @@ name: NodeJS Libs
 on:
   push:
     paths:
-      - "services/hyper-sdk-server/**"
-      - "!services/hyper-sdk-server/**/README.md"
+      - "*"
   workflow_dispatch:
 
 env:
@@ -13,7 +12,7 @@ env:
 defaults:
   run:
     shell: bash
-    working-directory: "services/hyper-sdk-server"
+    working-directory: "*"
 
 jobs:
   buildAndPublish:
